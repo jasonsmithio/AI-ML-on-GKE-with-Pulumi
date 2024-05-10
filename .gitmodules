@@ -1,0 +1,3 @@
+[submodule "llm-examples/mixtral"]
+	path = llm-examples/mixtral
+	url = git@github.com:jasonsmithio/ai-gke-pulumi-demo.git
