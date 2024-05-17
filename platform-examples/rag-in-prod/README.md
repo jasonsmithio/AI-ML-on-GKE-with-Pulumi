@@ -1,5 +1,7 @@
 # RAG with Ray, LangChain and HuggingFace on GKE using Pulumi Demo
 
+[From This GCP Blog Post](https://cloud.google.com/blog/products/ai-machine-learning/rag-quickstart-with-ray-langchain-and-huggingface)
+
 This is a very basic tutorial on how to get started with GCP on Cloud. This is based on another tutorial I made with regards to [AI on GKE](https://github.com/jasonsmithio/ai-on-gke/tree/main/mixtral-on-gke).
 
 This example will demostrate how to serve [Mixtral 8X7B](https://mistral.ai/news/mixtral-of-experts/ "Mixtral 8X7B") model on [NVIDIA L4 GPUs](https://cloud.google.com/compute/docs/gpus#l4-gpus "NVIDIA L4 GPUs") running on Google Cloud Kubernetes Engine (GKE). It will help you understand the AI/ML ready features of GKE and how to use them to serve large language models.
