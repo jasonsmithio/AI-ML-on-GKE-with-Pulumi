@@ -1,7 +1,7 @@
 import pulumi
 import pulumi_gcp as gcp
 import pulumi_kubernetes as kubernetes
-from k8s.mixtral import Mixtral as mixtral
+from resources import *
 
 # Get some provider-namespaced configuration values
 config = pulumi.Config()
