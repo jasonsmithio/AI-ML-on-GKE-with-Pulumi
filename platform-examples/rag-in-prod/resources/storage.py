@@ -30,6 +30,4 @@ class gcStorage:
                  ),
             ])            
 
-        return newbucket                          
-                                      
-                                                                 )
+        return newbucket

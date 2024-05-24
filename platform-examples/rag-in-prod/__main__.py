@@ -153,3 +153,15 @@ service_ip = service.status.apply(
 pulumi.export('service_ip', service_ip)
 pulumi.export("clusterName", gke_cluster.name)
 pulumi.export("clusterId", gke_cluster.id)
+
+kuberay_helm = kubernetes.helm.v3.Chart(
+    "kuberay-helm",
+    kubernetes.helm.v3.ChartOpts(
+        chart="kuberay-helm",
+        version="1.1.1",
+        namespace=k8s_namespace,
+        fetch_opts=kubernetes.helm.v3.FetchOps(
+            repo="https://ray-project.github.io/kuberay-helm/",
+        ),
+    ),
+)
