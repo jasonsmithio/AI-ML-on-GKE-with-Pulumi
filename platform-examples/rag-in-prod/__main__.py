@@ -1,7 +1,7 @@
 import pulumi
 import pulumi_gcp as gcp
 import pulumi_kubernetes as kubernetes
-from resources import *
+from resources import storage, cloudsql, cluster
 
 # Get some provider-namespaced configuration values
 config = pulumi.Config()
@@ -12,6 +12,12 @@ gke_network = config.get("gkeNetwork", "default")
 gke_cluster_name = config.get("clusterName", "mixtral-cluster")
 gke_master_version =config.get("master_version", 1.27)
 gke_master_node_count = config.get_int("nodesPerZone", 1)
+gcs_storage = config.get("gcs_bucket")
+k8s_namespace = config.get('k8s_namespace')
+
+mybucket = storage.gcStorage(gcs_storage, gcp_region)
+
+
 
 #setting unique values for the nodepool
 gke_nodepool_name = config.get("nodepoolName", "mixtral-nodepool")

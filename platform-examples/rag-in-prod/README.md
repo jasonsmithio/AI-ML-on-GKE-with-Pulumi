@@ -84,7 +84,7 @@ pulumi stack init
 
 ### Settings some variables
 
-In our Python demo, we will be standing up a GKE Cluster. Pulumi allows us to [configur](https://www.pulumi.com/docs/concepts/config/) environment variables in a `Pulumi.<env>.yaml` file. While you can manually build the file, you can also just execute the commands below.
+In our Python demo, we will be standing up a GKE Cluster. Pulumi allows us to [configure](https://www.pulumi.com/docs/concepts/config/) environment variables in a `Pulumi.<env>.yaml` file. While you can manually build the file, you can also just execute the commands below.
 
 ```bash
 pulumi config set gcp:project $PROJECT_ID
@@ -92,11 +92,13 @@ pulumi config set gcp:projectNumber $PROJECT_NUMBER
 pulumi config set gcp:gceSA $GCE_SA  
 pulumi config set gcp:region $REGION
 pulumi config set gcp:zone $ZONE
-pulumi config set gcp:gkeNetwork $NETWORK
+pulumi config set gcp:gcs_bucket ray-gke-storage-$PROJECT_ID
 pulumi config set gcp:clusterName mixtral-gke-cluster
 pulumi config set gcp:master_version 1.27
 pulumi config set gcp:node_count 5
+pulumi config set gcp:gkeNetwork $NETWORK
 pulumi config set gcp:node_machine_type n2d-standard-4
+pulumi config set gcp:k8s_namespace 
 ```
 
 Notice how we are using some of the variables we set earlier.

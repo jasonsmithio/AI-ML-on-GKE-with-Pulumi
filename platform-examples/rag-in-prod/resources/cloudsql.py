@@ -4,12 +4,13 @@ import pulumi_gcp as gcp
 
 class CloudSQL:
 
-    def __init__(self, instance, dbname, region, version, tier):
+    def __init__(self, instance, dbname, region, tier, version='POSTGRES_15'):
         self.instance = instance
         self.dbname = dbname
         self.region = region
-        self.version = version
         self.tier = tier
+        self.version = version
+
 
     def pginstance(self):
 
