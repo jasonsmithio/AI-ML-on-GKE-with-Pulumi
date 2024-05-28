@@ -88,17 +88,16 @@ In our Python demo, we will be standing up a GKE Cluster. Pulumi allows us to [c
 
 ```bash
 pulumi config set gcp:project $PROJECT_ID
-pulumi config set gcp:projectNumber $PROJECT_NUMBER
-pulumi config set gcp:gceSA $GCE_SA  
+pulumi config set rag:projectNumber $PROJECT_NUMBER
 pulumi config set gcp:region $REGION
 pulumi config set gcp:zone $ZONE
-pulumi config set gcp:gcs_bucket ray-gke-storage-$PROJECT_ID
-pulumi config set gcp:clusterName mixtral-gke-cluster
-pulumi config set gcp:master_version 1.27
-pulumi config set gcp:node_count 5
-pulumi config set gcp:gkeNetwork $NETWORK
-pulumi config set gcp:node_machine_type n2d-standard-4
-pulumi config set gcp:k8s_namespace 
+pulumi config set rag:gcs_bucket ray-gke-storage-$PROJECT_ID
+pulumi config set rag:clusterName $CLUSTER_NAME
+pulumi config set rag:master_version 1.27
+pulumi config set rag:node_count 5
+pulumi config set rag:gkeNetwork $NETWORK
+pulumi config set rag:node_machine_type n2d-standard-4
+pulumi config set rag:k8s_namespace rag_namespace
 ```
 
 Notice how we are using some of the variables we set earlier.
@@ -187,6 +186,11 @@ We will execute now let Pulumi take our Python program and deploy
 ```bash
 pulumi up
 ```
+
+
+[Kustomize Support](https://www.pulumi.com/blog/announcing-kustomize-support/)
+
+[Kuberay Kustomize](https://ray-project.github.io/kuberay/deploy/installation/)
 
 ### Testing
 

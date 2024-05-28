@@ -1,7 +1,0 @@
-name: sandbox
-runtime: python
-config:
-  github:owner:
-    value: 'TODO: var.github_org'
-  github:token:
-    value: 'TODO: var.github_token'

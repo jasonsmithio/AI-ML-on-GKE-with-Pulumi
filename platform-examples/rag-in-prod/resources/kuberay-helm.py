@@ -7,4 +7,4 @@ class Kuberay:
         self.provider = provider
 
     def mixtral8x7b(self):
-        
+        self.provider = "a"

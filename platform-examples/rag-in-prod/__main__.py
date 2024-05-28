@@ -1,28 +1,40 @@
 import pulumi
 import pulumi_gcp as gcp
 import pulumi_kubernetes as kubernetes
-from resources import storage, cloudsql, cluster
+from pulumi_kubernetes.helm.v3 import Chart, ChartOpts, FetchOpts
+from resources import storage, cloudsql
 
 # Get some provider-namespaced configuration values
-config = pulumi.Config()
-gcp_project = config.get("project")
-gcp_region = config.get("region", "us-central1")
-gcp_zone = config.get("zone", "us-central1-a")
-gke_network = config.get("gkeNetwork", "default")
-gke_cluster_name = config.get("clusterName", "mixtral-cluster")
-gke_master_version =config.get("master_version", 1.27)
-gke_master_node_count = config.get_int("nodesPerZone", 1)
-gcs_storage = config.get("gcs_bucket")
-k8s_namespace = config.get('k8s_namespace')
-
-mybucket = storage.gcStorage(gcs_storage, gcp_region)
+gcp_config = pulumi.Config("gcp")
+gcp_project = gcp_config.get("project")
+gcp_region = gcp_config.get("region", "us-central1")
+gcp_zone = gcp_config.get("zone", "us-central1-a")
 
 
+rag_config = pulumi.Config("rag")
+gke_network = rag_config.get("gkeNetwork", "gke-main")
+gke_cluster_name = rag_config.get("clusterName", "rag-cluster")
+gke_master_version = rag_config.get("master_version", 1.27)
+gke_master_node_count = rag_config.get_int("nodesPerZone", 1)
+gcs_storage = rag_config.get("gcs_bucket")
+k8s_namespace = rag_config.get('k8s_namespace')
 
 #setting unique values for the nodepool
-gke_nodepool_name = config.get("nodepoolName", "mixtral-nodepool")
-gke_nodepool_node_count = config.get_int("nodesPerZone", 2)
-gke_ml_machine_type = config.get("mlMachines", "g2-standard-24")
+gke_nodepool_name = rag_config.get("nodepoolName", "mixtral-nodepool")
+gke_nodepool_node_count = rag_config.get_int("nodesPerZone", 2)
+gke_ml_machine_type = rag_config.get("mlMachines", "g2-standard-24")
+
+#Create GCS Bucket
+mybucket = storage.gcStorage(gcs_storage, gcp_region)
+
+#Create CloudSQL instance
+
+netid = gcp.compute.get_network(name=gke_network)
+
+pgsql = cloudsql.CloudSQL("pg_rag_instance","pg_db", gcp_region,"db-n1-standard-8", netid.id)
+
+dbinst = pgsql.pginstance()
+dbname = pgsql.pgname()
 
 # Create a cluster in the new network and subnet
 gke_cluster = gcp.container.Cluster("cluster-1", 
@@ -134,34 +146,19 @@ kubeconfig = kubernetes.Provider('gke_k8s', kubeconfig=k8s_config, opts=pulumi.R
 #    depends_on=[gke_cluster]
 #)
 
-#mixtral =  kubernetes.yaml.ConfigFile(
-#    "mixtral",
-#    file="k8s/mixtral-huggingface.yaml",
-#    opts=pulumi.ResourceOptions(provider=kubeconfig,depends_on=[gke_nodepool]),
-#)
 
-deploy = mixtral(kubeconfig)
-
-service = deploy.mixtralService()
-deployment = deploy.mixtral8x7b()
 
 # Export the Service's IP address
-service_ip = service.status.apply(
-    lambda status: status.load_balancer.ingress[0].ip if status.load_balancer.ingress else None
-)
+#service_ip = service.status.apply(
+#    lambda status: status.load_balancer.ingress[0].ip if status.#load_balancer.ingress else None
+#)
 
-pulumi.export('service_ip', service_ip)
+#pulumi.export('service_ip', service_ip)
 pulumi.export("clusterName", gke_cluster.name)
 pulumi.export("clusterId", gke_cluster.id)
 
-kuberay_helm = kubernetes.helm.v3.Chart(
-    "kuberay-helm",
-    kubernetes.helm.v3.ChartOpts(
-        chart="kuberay-helm",
-        version="1.1.1",
-        namespace=k8s_namespace,
-        fetch_opts=kubernetes.helm.v3.FetchOps(
-            repo="https://ray-project.github.io/kuberay-helm/",
-        ),
-    ),
-)
+# Kuberay Kustomize
+
+kubernetes.kustomize.Directory("kuberay",
+                        directory="kuberay/default")
+
