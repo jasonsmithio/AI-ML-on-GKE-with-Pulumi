@@ -8,26 +8,17 @@ class gcStorage:
         self.location = location
 
     def makebucket(self):
-        newbucket = gcp.storage.Bucket("auto-expire",
+        newbucket = gcp.storage.Bucket(self.bucketname,
             name=self.bucketname,
             location=self.location,
-            lifecycle_rules=[
-                gcp.storage.BucketLifecycleRuleArgs(
-                    condition=gcp.storage.BucketLifecycleRuleConditionArg(
-                        age=3,
-                    ),
-                    action=gcp.storage.BucketLifecycleRuleActionArgs(
-                        type="Delete",
-                    ),
+            lifecycle_rules=[gcp.storage.BucketLifecycleRuleArgs(
+                action=gcp.storage.BucketLifecycleRuleActionArgs(
+                    type="Delete",
                 ),
-                gcp.storage.BucketLifecycleRuleArgs(
-                    condition=gcp.storage.BucketLifecycleRuleConditionArg(
-                        age=1,
-                    ),
-                    action=gcp.storage.BucketLifecycleRuleActionArgs(
-                        type="AbortIncompleteMultipartUpload",
-                    ),
-                 ),
-            ])            
+                condition=gcp.storage.BucketLifecycleRuleConditionArgs(
+                    days_since_noncurrent_time=3,
+                    no_age=True,
+                ),
+            )])            
 
         return newbucket

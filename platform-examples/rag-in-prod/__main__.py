@@ -2,7 +2,7 @@ import pulumi
 import pulumi_gcp as gcp
 import pulumi_kubernetes as kubernetes
 from pulumi_kubernetes.helm.v3 import Chart, ChartOpts, FetchOpts
-from resources import storage, cloudsql
+from resources import storage, cloudsql, svcacct
 
 # Get some provider-namespaced configuration values
 gcp_config = pulumi.Config("gcp")
@@ -12,9 +12,9 @@ gcp_zone = gcp_config.get("zone", "us-central1-a")
 
 
 rag_config = pulumi.Config("rag")
-gke_network = rag_config.get("gkeNetwork", "gke-main")
 gke_cluster_name = rag_config.get("clusterName", "rag-cluster")
 gke_master_version = rag_config.get("master_version", 1.27)
+gke_network = rag_config.get("gkeNetwork", "gke-main")
 gke_master_node_count = rag_config.get_int("nodesPerZone", 1)
 gcs_storage = rag_config.get("gcs_bucket")
 k8s_namespace = rag_config.get('k8s_namespace')
@@ -25,19 +25,19 @@ gke_nodepool_node_count = rag_config.get_int("nodesPerZone", 2)
 gke_ml_machine_type = rag_config.get("mlMachines", "g2-standard-24")
 
 #Create GCS Bucket
-mybucket = storage.gcStorage(gcs_storage, gcp_region)
+mybucket = storage.gcStorage(gcs_storage, gcp_region).makebucket()
 
 #Create CloudSQL instance
 
 netid = gcp.compute.get_network(name=gke_network)
 
-pgsql = cloudsql.CloudSQL("pg_rag_instance","pg_db", gcp_region,"db-n1-standard-8", netid.id)
+pgsql = cloudsql.CloudSQL("pg-rag-instance","pg-db", gcp_region,"db-n1-standard-8", netid.id)
 
 dbinst = pgsql.pginstance()
 dbname = pgsql.pgname()
 
 # Create a cluster in the new network and subnet
-gke_cluster = gcp.container.Cluster("cluster-1", 
+gke_cluster = gcp.container.Cluster(gke_cluster_name, 
     name = gke_cluster_name,
     deletion_protection=False,
     location = gcp_region,

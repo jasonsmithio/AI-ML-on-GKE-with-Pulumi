@@ -5,7 +5,8 @@ import pulumi_random as random
 
 class svcAcct:
 
-    def __init__(self, display, project):
+    def __init__(self, saname, display, project):
+        self.saname = saname
         self.display = display
         self.project = project
         self.acctid = random.RandomString("random",
@@ -15,7 +16,7 @@ class svcAcct:
 
 
     def createSA(self):
-        account_resource = gcp.serviceaccount.Account("accountResource",
+        account_resource = gcp.serviceaccount.Account(self.saname,
             account_id=self.acctid,
             create_ignore_already_exists=False,
             description="string",

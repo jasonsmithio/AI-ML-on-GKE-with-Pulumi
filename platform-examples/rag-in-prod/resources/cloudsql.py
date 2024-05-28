@@ -1,5 +1,6 @@
 import pulumi
 import pulumi_gcp as gcp
+import pulumi_random as random
 
 
 class CloudSQL:
@@ -15,8 +16,7 @@ class CloudSQL:
 
     def pginstance(self):
 
-        newinstance = gcp.sql.DatabaseInstance("instance",
-            name=self.dbinstance,
+        newinstance = gcp.sql.DatabaseInstance(self.dbinstance,
             region=self.region,
             database_version=self.version,
             settings=gcp.sql.DatabaseInstanceSettingsArgs(
@@ -33,9 +33,23 @@ class CloudSQL:
         
 
     def pgname(self):    
-        database_deletion_policy = gcp.sql.Database("database_deletion_policy",
+        mypsql = gcp.sql.Database(self.dbname,
             name=self.dbname,
             instance=self.dbinstance,
             deletion_policy="ABANDON")
         
-        return database_deletion_policy
+        return mypsql
+    
+
+    def dbuser(self):
+        user = gcp.sql.User("users",
+            name=self.dbname,
+            instance= self.pginstance().name,
+            password= random.RandomPassword("password",
+                length=16,
+                special=True,
+                override_special="!#$%&*()-_=+[]{}<>:?")                 
+        )
+
+        return user
+

@@ -5,5 +5,5 @@ pulumi-gitlab==7.0.0
 pulumi-github==6.2.0
 pulumi-null==0.0.3
 pulumi-std==1.6.2
-pulumi-random==4.15.0
+pulumi-random==4.16.2
 pulumi-command==0.10.0
