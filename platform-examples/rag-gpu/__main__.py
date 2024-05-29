@@ -31,20 +31,79 @@ mybucket = storage.gcStorage(gcs_storage, gcp_region).makebucket()
 
 netid = gcp.compute.get_network(name=gke_network)
 
-pgsql = cloudsql.CloudSQL("pg-rag-instance","pg-db", gcp_region,"db-f1-micro", netid.id)
+pgsql = cloudsql.CloudSQL("pg-rag-instance","pg-db", gcp_region,"db-n1-standard-8", netid.id)
 
-dbinst = pgsql.pgbuild()
+dbinst = pgsql.pginstance()
+dbname = pgsql.pgname()
 
 # Create a cluster in the new network and subnet
-gke_cluster = gcp.container.Cluster(gke_cluster_name,
-    name=gke_cluster_name,
-    location=gcp_region,
-    network=gke_network,
-    enable_autopilot=True,
-    deletion_protection=False
+gke_cluster = gcp.container.Cluster(gke_cluster_name, 
+    name = gke_cluster_name,
+    deletion_protection=False,
+    location = gcp_region,
+    network = gke_network,
+    networking_mode="VPC_NATIVE",
+    initial_node_count = gke_master_node_count,
+    remove_default_node_pool = True,
+    min_master_version = gke_master_version,
+    workload_identity_config=gcp.container.ClusterWorkloadIdentityConfigArgs(
+        workload_pool=str(gcp_project)+".svc.id.goog",
+    ),
+    addons_config=gcp.container.ClusterAddonsConfigArgs(
+        gcs_fuse_csi_driver_config={
+            "enabled": "True",
+        }, 
+    ),
+    node_config=gcp.container.ClusterNodeConfigArgs(
+        oauth_scopes=["https://www.googleapis.com/auth/cloud-platform"],
+        shielded_instance_config={
+            "enable_secure_boot" : "True",
+            "enable_integrity_monitoring": "True",
+        },
+    ),
+)
+
+# Defining the GKE Node Pool
+gke_nodepool = gcp.container.NodePool("nodepool-1",
+    name = gke_nodepool_name,
+    location = gcp_region,
+    node_locations = [gcp_zone],
+    cluster = gke_cluster.id,
+    node_count = gke_nodepool_node_count,
+    node_config = gcp.container.NodePoolNodeConfigArgs(
+        preemptible = False,
+        machine_type = gke_ml_machine_type,
+        disk_size_gb = 20,
+        ephemeral_storage_local_ssd_config={
+            "local_ssd_count":"2",
+        },
+        guest_accelerators=[gcp.container.NodePoolNodeConfigGuestAcceleratorArgs(
+            type="nvidia-l4",
+            count=2,
+            gpu_driver_installation_config={
+                "gpu_driver_version" : "LATEST",
+            },
+        )],
+        metadata = {
+            "install-nvidia-driver": "True",
+        },
+        oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"],
+        shielded_instance_config = gcp.container.NodePoolNodeConfigShieldedInstanceConfigArgs(
+            enable_integrity_monitoring = True,
+            enable_secure_boot = True
+        )
+    ),
+    # Set the Nodepool Autoscaling configuration
+    autoscaling = gcp.container.NodePoolAutoscalingArgs(
+        min_node_count = 1,
+        max_node_count = 2
+    ),
+    # Set the Nodepool Management configuration
+    management = gcp.container.NodePoolManagementArgs(
+        auto_repair  = True,
+        auto_upgrade = True
     )
-
-
+)
 
 # Manufacture a GKE-style Kubeconfig. Note that this is slightly "different" because of the way GKE requires
 # gcloud to be in the picture for cluster authentication (rather than using the client cert/key directly).
@@ -76,7 +135,7 @@ users:
 """.format(info[2]['cluster_ca_certificate'], info[1], '{0}_{1}_{2}'.format(gcp_project, gcp_zone, info[0])))
 
 # Make a Kubernetes provider instance that uses our cluster from above.
-kubeconfig = kubernetes.Provider('gke_k8s', kubeconfig=k8s_config)
+kubeconfig = kubernetes.Provider('gke_k8s', kubeconfig=k8s_config, opts=pulumi.ResourceOptions(depends_on=[gke_nodepool]))
 
 # Create a GCP service account for the nodepool
 #gke_nodepool_sa = gcp.serviceaccount.Account(

@@ -14,9 +14,9 @@ class CloudSQL:
         self.version = version
 
 
-    def pginstance(self):
+    def pgbuild(self):
 
-        newinstance = gcp.sql.DatabaseInstance(self.dbinstance,
+        pginstance = gcp.sql.DatabaseInstance(self.dbinstance,
             region=self.region,
             database_version=self.version,
             settings=gcp.sql.DatabaseInstanceSettingsArgs(
@@ -27,28 +27,23 @@ class CloudSQL:
                     enable_private_path_for_google_cloud_services=True,
                 ),
             ),
-            deletion_protection=True)
-        
-        return newinstance
-        
-
-    def pgname(self):    
-        mypsql = gcp.sql.Database(self.dbname,
+            deletion_protection=False)
+           
+        pgsql = gcp.sql.Database(self.dbname,
             name=self.dbname,
             instance=self.dbinstance,
-            deletion_policy="ABANDON")
+            deletion_policy="ABANDON",
+            opts=pulumi.ResourceOptions(depends_on=[pginstance])
+            )
         
-        return mypsql
-    
-
-    def dbuser(self):
         user = gcp.sql.User("users",
             name=self.dbname,
-            instance= self.pginstance().name,
+            instance= self.dbinstance,
             password= random.RandomPassword("password",
                 length=16,
                 special=True,
-                override_special="!#$%&*()-_=+[]{}<>:?")                 
+                override_special="!#$%&*()-_=+[]{}<>:?"),
+            opts=pulumi.ResourceOptions(depends_on=[pgsql])                
         )
 
         return user
